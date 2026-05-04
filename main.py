@@ -19,9 +19,9 @@ import traceback
 # Email settings
 EMAIL_ADDRESS = 'michalozarek2000@gmail.com'
 EMAIL_PASSWORD = 'vhgu vcci kdnb brem'  # Use app password if using Gmail 2FA
-TO_EMAIL = 'michalozarek2000@gmail.com
+TO_EMAIL = 'michalozarek2000@gmail.com'
 
-PRICE_THRESHOLD = 50
+PRICE_THRESHOLD = 70
 currency = '£'
 
 urls = [
