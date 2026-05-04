@@ -1,11 +1,4 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-
+from playwright.sync_api import sync_playwright
 from datetime import datetime
 import json
 import smtplib
@@ -25,34 +18,33 @@ PRICE_THRESHOLD = 70
 currency = '£'
 
 urls = [
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-06&originIata=EDI&destinationIata=KRK',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-07&originIata=EDI&destinationIata=KRK',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-05&originIata=EDI&destinationIata=WMI',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-06&originIata=EDI&destinationIata=WMI',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-05&originIata=EDI&destinationIata=WRO',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-06&originIata=EDI&destinationIata=WRO',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-05&originIata=GLA&destinationIata=WRO',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-07&originIata=GLA&destinationIata=WMI',
-    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&dateOut=2026-08-05&originIata=GLA&destinationIata=KRK'
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-06&dateIn=&discount=0&isReturn=false&promoCode=&originIata=EDI&destinationIata=KRK&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-06&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=EDI&tpDestinationIata=KRK',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-07&dateIn=&discount=0&isReturn=false&promoCode=&originIata=EDI&destinationIata=KRK&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-07&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=EDI&tpDestinationIata=KRK',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-05&dateIn=&discount=0&isReturn=false&promoCode=&originIata=EDI&destinationIata=WMI&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-05&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=EDI&tpDestinationIata=WMI',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-06&dateIn=&discount=0&isReturn=false&promoCode=&originIata=EDI&destinationIata=WMI&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-06&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=EDI&tpDestinationIata=WMI',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-05&dateIn=&discount=0&isReturn=false&promoCode=&originIata=EDI&destinationIata=WRO&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-05&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=EDI&tpDestinationIata=WRO',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-06&dateIn=&discount=0&isReturn=false&promoCode=&originIata=EDI&destinationIata=WRO&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-06&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=EDI&tpDestinationIata=WRO',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-05&dateIn=&discount=0&isReturn=false&promoCode=&originIata=GLA&destinationIata=WRO&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-05&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=GLA&tpDestinationIata=WRO',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-07&dateIn=&discount=0&isReturn=false&promoCode=&originIata=GLA&destinationIata=WMI&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-07&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=GLA&tpDestinationIata=WMI',
+    'https://www.ryanair.com/gb/en/trip/flights/select?adults=1&teens=0&children=0&infants=0&dateOut=2026-08-05&dateIn=&discount=0&isReturn=false&promoCode=&originIata=GLA&destinationIata=KRK&tpAdults=1&tpTeens=0&tpChildren=0&tpInfants=0&tpStartDate=2026-08-05&tpEndDate=&tpDiscount=0&tpPromoCode=&tpOriginIata=GLA&tpDestinationIata=KRK'
 ]
 
 logging.basicConfig(level=logging.INFO)
 
-
 # ===================== EMAIL =====================
 
 def send_email(flights):
-    subject = f"✈️ {len(flights)} cheap flights under {currency}{PRICE_THRESHOLD} found!"
-    body = "Flights:\n\n"
+    subject = f"{len(flights)} cheap flights under {currency}{PRICE_THRESHOLD}"
+    body = ""
 
     for f in flights:
         body += f"""
-🛫 {f['origin']} → 🛬 {f['destination']}
-📅 {f['departureDate']}
-⏰ {f['departureTime']} → {f['arrivalTime']}
-💸 {currency}{f['price']}
-🔗 {f['url']}
--------------------------
+{f['origin']} → {f['destination']}
+{f['departureDate']}
+{f['departureTime']} → {f['arrivalTime']}
+{currency}{f['price']}
+{f['url']}
+---------------------
 """
 
     msg = MIMEMultipart()
@@ -61,85 +53,80 @@ def send_email(flights):
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))
 
-    try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-            server.send_message(msg)
-            logging.info("📧 Email sent")
-    except Exception as e:
-        logging.error(f"Email failed: {e}")
-
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.send_message(msg)
 
 # ===================== SCRAPER =====================
 
 def fetch_flights():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
     all_flights = []
 
-    for url in urls:
-        try:
-            logging.info(f"Checking {url}")
-            driver.get(url)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, ".flight-card"))
-            )
+        for url in urls:
+            try:
+                logging.info(f"Checking {url}")
+                page.goto(url, timeout=60000)
 
-            day = driver.find_element(By.CSS_SELECTOR, 'span.date-item__day-of-month--selected').text
-            month = driver.find_element(By.CSS_SELECTOR, 'span.date-item__month--selected').text
-            departureDate = f"{day} {month}"
+                page.wait_for_selector(".flight-card", timeout=20000)
 
-            flights_script = """
-            let flights = [];
-            document.querySelectorAll('.flight-card').forEach(card => {
-                let origin = card.querySelector('[data-ref="flight-segment.departure"] .flight-info__city')?.innerText;
-                let destination = card.querySelector('[data-ref="flight-segment.arrival"] .flight-info__city')?.innerText;
-                let dep = card.querySelector('[data-ref="flight-segment.departure"] .flight-info__hour')?.innerText;
-                let arr = card.querySelector('[data-ref="flight-segment.arrival"] .flight-info__hour')?.innerText;
-                let priceText = card.querySelector('flights-price-simple')?.innerText;
+                departureDate = page.evaluate("""
+                    () => {
+                        let day = document.querySelector('.date-item__day-of-month--selected')?.innerText;
+                        let month = document.querySelector('.date-item__month--selected')?.innerText;
+                        return day && month ? `${day} ${month}` : "N/A";
+                    }
+                """)
 
-                let price = null;
-                if (priceText) {
-                    let clean = priceText.replace(/[^0-9.,]/g, '').replace(',', '.');
-                    price = parseFloat(clean);
+                flights = page.evaluate("""
+                () => {
+                    let flights = [];
+                    document.querySelectorAll('.flight-card').forEach(card => {
+                        let origin = card.querySelector('[data-ref="flight-segment.departure"] .flight-info__city')?.innerText;
+                        let destination = card.querySelector('[data-ref="flight-segment.arrival"] .flight-info__city')?.innerText;
+                        let dep = card.querySelector('[data-ref="flight-segment.departure"] .flight-info__hour')?.innerText;
+                        let arr = card.querySelector('[data-ref="flight-segment.arrival"] .flight-info__hour')?.innerText;
+                        let priceText = card.querySelector('flights-price-simple')?.innerText;
+
+                        let price = null;
+                        if (priceText) {
+                            let clean = priceText.replace(/[^0-9.,]/g, '').replace(',', '.');
+                            price = parseFloat(clean);
+                        }
+
+                        flights.push({
+                            origin: origin || "N/A",
+                            destination: destination || "N/A",
+                            departureTime: dep || "N/A",
+                            arrivalTime: arr || "N/A",
+                            price: price,
+                            departureDate: arguments[0],
+                        });
+                    });
+                    return flights;
                 }
+                """)
 
-                flights.push({
-                    origin: origin || "N/A",
-                    destination: destination || "N/A",
-                    departureTime: dep || "N/A",
-                    arrivalTime: arr || "N/A",
-                    price: price,
-                    departureDate: arguments[0],
-                    url: arguments[1]
-                });
-            });
-            return JSON.stringify(flights);
-            """
+                for f in flights:
+                    f["url"] = url
+                    f["departureDate"] = departureDate
 
-            result = driver.execute_script(flights_script, departureDate, url)
-            all_flights.extend(json.loads(result))
+                all_flights.extend(flights)
 
-        except Exception as e:
-            logging.error(f"Error on {url}: {e}")
+            except Exception as e:
+                logging.error(f"Error on {url}: {e}")
 
-    driver.quit()
+        browser.close()
+
     return all_flights
-
 
 # ===================== MAIN =====================
 
 if __name__ == "__main__":
-    logging.info("🔁 Running flight check")
+    logging.info("Running flight check")
 
     try:
         flights = fetch_flights()
@@ -156,5 +143,4 @@ if __name__ == "__main__":
             logging.info("No cheap flights found")
 
     except Exception:
-        logging.error("Unexpected error:")
         traceback.print_exc()
